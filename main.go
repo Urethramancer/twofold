@@ -77,7 +77,7 @@ func main() {
 					if err != nil {
 						pr("Error: %s", err.Error())
 					}
-					pr("Symlinked %s to %s", f, orig)}
+					pr("Symlinked %s to %s", f, orig)
 				}
 			}
 		}
