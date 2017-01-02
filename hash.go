@@ -16,13 +16,16 @@ func hashFile(name string, size int64) string {
 		return ""
 	}
 
-	pr("%s", name)
-	bar := pb.StartNew(int(size))
-	bar.ShowSpeed = true
-	bar.SetUnits(pb.U_BYTES)
-	bar.ShowTimeLeft = false
-	src := bar.NewProxyReader(file)
-	defer bar.Update()
+	src := io.Reader(file)
+	if opts.Verbose {
+		pr("%s", name)
+		bar := pb.StartNew(int(size))
+		bar.ShowSpeed = true
+		bar.SetUnits(pb.U_BYTES)
+		bar.ShowTimeLeft = false
+		src = bar.NewProxyReader(file)
+		defer bar.Update()
+	}
 
 	hash := sha256.New()
 	_, err = io.Copy(hash, src)
