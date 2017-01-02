@@ -36,30 +36,55 @@ func main() {
 		return
 	}
 
-	if opts.List {
-		dup := scanDir(dir)
-		list := make([]*Duplicates, 0)
-		for _, v := range dup {
-			if len(*v.Files) > 1 {
-				list = append(list, v)
-			}
+	if opts.List || opts.Hardlink || opts.Symlink {
+		list := scanDir(dir)
+		if opts.Verbose {
+			pr("\n")
 		}
 		if len(list) == 0 {
 			pr("No duplicates found.")
 			return
 		}
-		for _, d := range list {
-			pr("Duplicates of %s (%s):", d.Hash, humanNumber(d.Size, opts.Tens))
-			for i, n := range *d.Files {
-				pr("\t%d\t%s", i+1, n)
+
+		// Only display duplicates
+		if opts.List {
+			for _, d := range list {
+				pr("Duplicates of %s (%s):", d.Hash, humanNumber(d.Size, opts.Tens))
+				for i, n := range *d.Files {
+					pr("\t%d\t%s", i+1, n)
+				}
+				pr("")
 			}
-			pr("")
+			return
 		}
-		return
+
+		// Do something about them
+		for _, d := range list {
+			files := *d.Files
+			orig := files[0]
+			files = files[1:]
+			for _, f := range files {
+				os.Remove(f)
+				if opts.Hardlink {
+					err = os.Link(orig, f)
+					if err != nil {
+						pr("Error: %s", err.Error())
+					}
+					pr("Hardlinked %s to %s", f, orig)
+				}
+				if opts.Symlink {
+					err = os.Symlink(orig, f)
+					if err != nil {
+						pr("Error: %s", err.Error())
+					}
+					pr("Symlinked %s to %s", f, orig)}
+				}
+			}
+		}
 	}
 }
 
-func scanDir(dir string) map[string]*Duplicates {
+func scanDir(dir string) []*Duplicates {
 	pr("Deep-scanning %s\n", dir)
 	dup := make(map[string]*Duplicates)
 	err := filepath.Walk(dir, func(path string, fi os.FileInfo, err error) error {
@@ -79,8 +104,6 @@ func scanDir(dir string) map[string]*Duplicates {
 					list := *dup[hash].Files
 					list = append(list, path)
 					dup[hash].Files = &list
-				} else {
-					pr("Nope!")
 				}
 			}
 		}
@@ -92,6 +115,12 @@ func scanDir(dir string) map[string]*Duplicates {
 		os.Exit(2)
 	}
 
-	pr("")
-	return dup
+	list := make([]*Duplicates, 0)
+	for _, v := range dup {
+		if len(*v.Files) > 1 {
+			list = append(list, v)
+		}
+	}
+
+	return list
 }
