@@ -8,13 +8,14 @@ import (
 )
 
 var opts struct {
+	Version  bool `short:"V" long:"version" description:"Prints version and exits."`
 	Verbose  bool `short:"v" description:"Verbose output. Shows progress of checksumming for each file, not just the list of duplicates."`
 	List     bool `short:"l" long:"list" description:"List duplicates only."`
 	Symlink  bool `long:"symlink" description:"Symlink all duplicates to the first file."`
 	Hardlink bool `long:"hardlink" description:"Hardlink all duplicates to the first file."`
 	Tens     bool `short:"s" long:"si" description:"Use SI numbers." default-value:"true"`
 	Args     struct {
-		Path string `required:"true" positional-arg-name:"DIRECTORY" decription:"Directory to look deeply into for duplicates."`
+		Path string `positional-arg-name:"DIRECTORY" decription:"Directory to look deeply into for duplicates." default-value:"."`
 	} `positional-args:"true"`
 }
 
@@ -27,6 +28,11 @@ type Duplicates struct {
 func main() {
 	_, err := flags.Parse(&opts)
 	if err != nil {
+		return
+	}
+
+	if opts.Version {
+		printVersion()
 		return
 	}
 
