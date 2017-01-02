@@ -10,8 +10,8 @@ import (
 var opts struct {
 	Verbose  bool `short:"v" description:"Verbose output. Shows progress of checksumming for each file, not just the list of duplicates."`
 	List     bool `short:"l" long:"list" description:"List duplicates only."`
-	Symlink  bool `long:"symlink" description:"Symlink all files after the first."`
-	Hardlink bool `long:"hardlink" description:"Hardlink all files after the first."`
+	Symlink  bool `long:"symlink" description:"Symlink all duplicates to the first file."`
+	Hardlink bool `long:"hardlink" description:"Hardlink all duplicates to the first file."`
 	Tens     bool `short:"s" long:"si" description:"Use SI numbers." default-value:"true"`
 	Args     struct {
 		Path string `required:"true" positional-arg-name:"DIRECTORY" decription:"Directory to look deeply into for duplicates."`
