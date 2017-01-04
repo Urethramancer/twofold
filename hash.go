@@ -29,7 +29,7 @@ func hashFile(name string, size int64) string {
 
 	hash := sha256.New()
 	_, err = io.Copy(hash, src)
-	file.Close()
+	_ = file.Close()
 	if err != nil {
 		pr("Couldn't read/hash %s", name)
 		return ""

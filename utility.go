@@ -3,16 +3,10 @@ package main
 import (
 	"fmt"
 	"math"
-	"os"
 )
 
 func pr(f string, v ...interface{}) {
 	fmt.Printf(f+"\n", v...)
-}
-
-func exists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
 }
 
 func humanNumber(n int64, tens bool) string {
