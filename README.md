@@ -1,4 +1,4 @@
-# twofold
+# twofold [![Build Status](https://travis-ci.org/Urethramancer/twofold.svg?branch=master)](https://travis-ci.org/Urethramancer/ftwofold)
 An exercise in duplicate-finding.
 
 ## Purpose
