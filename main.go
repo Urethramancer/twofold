@@ -3,10 +3,11 @@ package main
 import (
 	"path/filepath"
 
-	"github.com/jessevdk/go-flags"
+	"github.com/Urethramancer/signor/opt"
 )
 
 var opts struct {
+	opt.DefaultHelp
 	Version  bool `short:"V" long:"version" description:"Prints version and exits."`
 	Verbose  bool `short:"v" description:"Verbose output. Shows progress of checksumming for each file, not just the list of duplicates."`
 	List     bool `short:"l" long:"list" description:"List duplicates only."`
@@ -20,8 +21,9 @@ var opts struct {
 }
 
 func main() {
-	_, err := flags.Parse(&opts)
-	if err != nil {
+	a := opt.Parse(&opts)
+	if opts.Help {
+		a.Usage()
 		return
 	}
 
