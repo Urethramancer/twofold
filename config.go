@@ -4,9 +4,9 @@ const (
 	program = "twofold"
 )
 
-// Version is filled in from Git tags.
-var Version = "undefined"
+// version is filled in from Git tags.
+var version = "undefined"
 
 func printVersion() {
-	pr("%s %s", program, Version)
+	pr("%s %s", program, version)
 }
