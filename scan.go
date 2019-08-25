@@ -27,6 +27,10 @@ func scanDir(dir string) []*Duplicates {
 					dup[hash].Files = &list
 				}
 			}
+		} else {
+			if fi.Name() == ".git" {
+				return filepath.SkipDir
+			}
 		}
 		return nil
 	})
