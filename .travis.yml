@@ -1,8 +1,0 @@
-language: go
-
-go:
-  - 1.12
-
-install:
-  - go get github.com/Urethramancer/signor
-  - go get github.com/cheggaaa/pb
