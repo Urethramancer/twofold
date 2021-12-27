@@ -3,7 +3,7 @@ package main
 import (
 	"path/filepath"
 
-	"github.com/Urethramancer/signor/opt"
+	"github.com/grimdork/opt"
 )
 
 var opts struct {
