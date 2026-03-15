@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// linkFunc is a variable wrapper around os.Link so tests can override link behaviour.
+var linkFunc = os.Link
+
 // Duplicates hold the common attributes of matching files, and the list of said files.
 type Duplicates struct {
 	Hash  string
@@ -53,7 +56,8 @@ func handleDuplicates(list []*Duplicates) {
 			// Apply mode: perform safe replacement
 			if flags.Hardlink {
 				// attempt to create hardlink at destination pointing to orig
-				err := os.Link(orig, f)
+				_ = os.Remove(f)
+				err := linkFunc(orig, f)
 				if err != nil {
 					// fallback: cross-device link not possible — copy the file instead
 					if isCrossDevice(err) {

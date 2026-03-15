@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -101,5 +102,69 @@ func TestHandleDuplicates_RemoveAndSymlink(t *testing.T) {
 	}
 	if st.Mode()&os.ModeSymlink == 0 {
 		t.Fatalf("dup2 is not a symlink")
+	}
+}
+
+func TestHandleDuplicates_HardlinkFallback(t *testing.T) {
+	dir := t.TempDir()
+	orig := createFile(t, dir, "orig_h.txt", "same")
+	dup := createFile(t, dir, "dup_h.txt", "same")
+	grp := &Duplicates{Hash: "h3", Size: 4, Files: []string{orig, dup}}
+
+	// simulate EXDEV by overriding linkFunc
+	prev := linkFunc
+	linkFunc = func(oldname, newname string) error {
+		return errors.New("EXDEV simulated")
+	}
+	defer func() { linkFunc = prev }()
+
+	flags.Apply = true
+	flags.Symlink = false
+	flags.Hardlink = true
+	handleDuplicates([]*Duplicates{grp})
+	// since link failed with EXDEV, dup should now be copied and exist
+	if _, err := os.Stat(dup); err != nil {
+		t.Fatalf("dup missing after EXDEV fallback: %v", err)
+	}
+	// ensure content matches
+	b, err := os.ReadFile(dup)
+	if err != nil {
+		t.Fatalf("read dup: %v", err)
+	}
+	if string(b) != "same" {
+		t.Fatalf("dup content mismatch")
+	}
+}
+
+func TestHandleDuplicates_HardlinkSuccess(t *testing.T) {
+	dir := t.TempDir()
+	orig := createFile(t, dir, "orig_h2.txt", "same")
+	dup := createFile(t, dir, "dup_h2.txt", "same")
+	grp := &Duplicates{Hash: "h4", Size: 4, Files: []string{orig, dup}}
+
+	// simulate successful link by overriding linkFunc
+	prev := linkFunc
+	linkFunc = func(oldname, newname string) error {
+		// remove dup and create a hardlink by linking orig to newname
+		_ = os.Remove(newname)
+		return os.Link(oldname, newname)
+	}
+	defer func() { linkFunc = prev }()
+
+	flags.Apply = true
+	flags.Symlink = false
+	flags.Hardlink = true
+	handleDuplicates([]*Duplicates{grp})
+	// after hardlink, both files should have same inode (on Unix)
+	st1, err := os.Stat(orig)
+	if err != nil {
+		t.Fatalf("stat orig: %v", err)
+	}
+	st2, err := os.Stat(dup)
+	if err != nil {
+		t.Fatalf("stat dup: %v", err)
+	}
+	if !os.SameFile(st1, st2) {
+		t.Fatalf("files are not hardlinked")
 	}
 }
