@@ -89,7 +89,9 @@ func scanDir(dir string) ([]*Duplicates, error) {
 	})
 
 	bar := pb.New64(total)
-	if flags.Verbose {
+	// show the bar only when verbose and running on a TTY
+	showBar := flags.Verbose && isTerminal()
+	if showBar {
 		bar.Set(pb.Bytes, false)
 		bar.Start()
 	}
