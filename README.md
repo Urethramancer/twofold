@@ -21,13 +21,17 @@ Deep-scanning /Users/orb/Downloads
 
 All duplicates found will be listed, grouped by hash, then the program exits.
 
-Use the `-v` flag to also display checksumming progress while it traverses the path.
+Use the `-v` flag to also display checksumming progress while it traverses the path. When running with concurrency (the default), progress is aggregated into a single bar.
 
 The slightly more destructive flags are:
 
 - `--symlink` to remove and symlink duplicates from the first file in the set
-- `--hardlink` to remove and link (a.k.a. hardlink) duplicates to the inode of the first file in the set (the most convenient, should the original move or be deleted)
+- `--hardlink` to remove and link (a.k.a. hardlink) duplicates to the inode of the first file in the set (the most convenient, should the original move or be deleted). If a hardlink operation fails because the files are on different devices, twofold will fall back to copying the original file to the duplicate path.
 - `--remove` to simply remove the duplicates (the most destructive option)
+
+New flags:
+
+- `--workers N` control the number of concurrent hashing workers; default is number of CPU cores. Use `--workers 0` or `--workers 1` to force single-threaded operation.
 
 ## LICENCE
 MIT.
