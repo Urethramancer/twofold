@@ -1,41 +1,83 @@
-# twofold [![Build Status](https://travis-ci.org/Urethramancer/twofold.svg?branch=master)](https://travis-ci.org/Urethramancer/ftwofold)
-An exercise in duplicate-finding.
+# twofold
 
-## Purpose
-Find duplicates within a folder and list, link or remove them. Slightly dangerous, no backsies if you screw up.
+An opinionated duplicate-finder for local folders.
+
+Twofold scans a directory tree, computes SHA-256 checksums of regular files, groups identical files by hash and size, and can list duplicates or replace duplicates with symlinks or hardlinks (or remove them).
+
+This repository contains a small CLI and tests. Use with care — some operations are destructive.
+
+## Features
+
+- Fast concurrent hashing with a bounded worker pool (default: number of CPU cores).
+- Aggregated progress bar when running in a terminal and `-v`/`--verbose` is enabled.
+- Safe defaults: dry-run by default — use `--apply` to make changes.
+- Hardlink fallback: when hardlinking fails across devices, twofold falls back to copying the file so duplicate content is preserved.
+- Unit tests covering synchronous and concurrent scans, and replacement behaviors.
+
+## Install
+
+Build from source:
+
+```sh
+go build -o twofold ./...
+```
 
 ## Usage
-The simplest invocation is to list duplicates in the current directory. Example:
+
+Basic listing of duplicates in the current directory:
 
 ```sh
-$ twofold -l
-Deep-scanning /Users/orb/go/twofold
+twofold -l
 ```
 
-You can specify a path as its sole standalone argument:
+Specify a path:
 
 ```sh
-$ twofold -l ~/Downloads
-Deep-scanning /Users/orb/Downloads
+twofold -l ~/Downloads
 ```
 
-All duplicates found will be listed, grouped by hash, then the program exits.
+Flags
 
-Use the `-v` flag to also display checksumming progress while it traverses the path. When running with concurrency (the default), progress is aggregated into a single bar.
+- `-v`, `--verbose` — show checksumming progress. When concurrency is enabled, progress is shown as a single aggregated bar in a TTY.
+- `-l`, `--list` — list duplicates only (dry-run behavior).
+- `--symlink` — remove duplicates and create symlinks pointing to the canonical file.
+- `--hardlink` — remove duplicates and create hardlinks pointing to the canonical file. If hardlinking fails because files are on different devices, twofold falls back to copying the original file to the duplicate path.
+- `--remove` — remove duplicate files without linking them.
+- `--apply` — apply destructive changes (without this flag the program runs as a dry-run and will only print what it would do).
+- `--workers N` — number of concurrent hashing workers. Default: number of CPU cores. Use `--workers 0` or `--workers 1` to force single-threaded operation.
+- `--path PATH` — directory to scan (default: `.`).
 
-The slightly more destructive flags are:
+Examples
 
-- `--symlink` to remove and symlink duplicates from the first file in the set
-- `--hardlink` to remove and link (a.k.a. hardlink) duplicates to the inode of the first file in the set (the most convenient, should the original move or be deleted). If a hardlink operation fails because the files are on different devices, twofold will fall back to copying the original file to the duplicate path.
-- `--remove` to simply remove the duplicates (the most destructive option)
+Dry-run listing in Downloads:
 
-New flags:
+```sh
+twofold -l --path ~/Downloads
+```
 
-- `--workers N` control the number of concurrent hashing workers; default is number of CPU cores. Use `--workers 0` or `--workers 1` to force single-threaded operation.
+Hardlink duplicates (apply changes):
 
-## LICENCE
-MIT.
+```sh
+twofold --hardlink --apply --path /mnt/data/photos
+```
 
-### TODO
-- Maybe add date-sorting to make it possible to keep the oldest or newest of each set of duplicates.
-- Search multiple supplied directories, finding duplicates between all of them.
+Force single-threaded (useful for debugging):
+
+```sh
+twofold --workers 1 -l
+```
+
+## Safety notes
+
+- The program is potentially destructive when `--apply` is used. Double-check options before running on important data.
+- Hardlinks cannot be created across filesystem boundaries. twofold will attempt a fallback copy when that occurs; copied files preserve the original file mode.
+- When in doubt, run with `-l` (list) and `--apply` omitted to preview actions.
+
+## Development
+
+- Tests: `go test ./...` (CI runs `go vet` and `go test`).
+- Formatting: `gofmt -w .`.
+
+## License
+
+MIT
