@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/cheggaaa/pb"
+	"github.com/cheggaaa/pb/v3"
 )
 
 func hashFile(name string, size int64) string {
@@ -15,25 +15,25 @@ func hashFile(name string, size int64) string {
 		pr("Couldn't open %s", name)
 		return ""
 	}
+	defer file.Close()
 
 	src := io.Reader(file)
-	if opts.Verbose {
+	if flags.Verbose {
 		pr("%s", name)
-		bar := pb.StartNew(int(size))
-		bar.ShowSpeed = true
-		bar.SetUnits(pb.U_BYTES)
-		bar.ShowTimeLeft = false
+		// pb/v3 uses NewPool or default bar; use simple default bar
+		bar := pb.New64(0)
+		bar.Set(pb.Bytes, true)
+		bar.Start()
 		src = bar.NewProxyReader(file)
-		defer bar.Update()
+		defer bar.Finish()
 	}
 
-	hash := sha256.New()
-	_, err = io.Copy(hash, src)
-	_ = file.Close()
+	h := sha256.New()
+	_, err = io.Copy(h, src)
 	if err != nil {
 		pr("Couldn't read/hash %s", name)
 		return ""
 	}
 
-	return hex.EncodeToString(hash.Sum(nil))
+	return hex.EncodeToString(h.Sum(nil))
 }
